@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <link rel="icon" type="image/png" href="/wavechat.png"/>
+    <title>Wave Messenger - Chat</title>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (theme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else if (theme === 'auto') {
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+    <!-- Theme System -->
+    <link href="/css/theme.css" rel="stylesheet"/>
+    <link href="/css/theme-config.css" rel="stylesheet"/>
+    <script src="/js/mobile-detector.js"></script>
+    <script src="/js/update-checker.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0db9f2",
+                        "primary-dark": "#0a8fc4",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0a0f12",
+                        "surface-dark": "#0f1419",
+                        "surface-hover": "#151b21",
+                        "surface-lighter": "#1a2128",
+                        "border-dark": "#1f2830",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                    boxShadow: {
+                        'glow': '0 0 15px -3px rgba(13, 185, 242, 0.3)',
+                        'glow-lg': '0 0 30px -5px rgba(13, 185, 242, 0.4)',
+                        'dark': '0 4px 20px rgba(0, 0, 0, 0.5)',
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Transparency Mode Styles */
+        body.transparency-mode .bg-surface-dark,
+        body.transparency-mode aside.desktop-sidebar,
+        body.transparency-mode aside#roomInfoPanel {
+            background: rgba(15, 20, 25, 0.4) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.transparency-mode header {
+            background: rgba(15, 20, 25, 0.6) !important;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        
+        body.transparency-mode .bg-surface-hover:hover {
+            background: rgba(21, 27, 33, 0.5) !important;
+        }
+        
+        body.transparency-mode .bg-surface-lighter {
+            background: rgba(26, 33, 40, 0.5) !important;
+        }
+        
+        /* Custom Scrollbar - Darker */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2830; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2a3440; }
+        
+        /* Tabs - Sliding Highlight */
+        #tabHighlight {
+            background: var(--color-primary);
+            box-shadow: 0 2px 12px var(--accent-glow), 0 0 20px var(--accent-glow);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.2s ease;
+            opacity: 0; /* Start hidden, will be shown by JS */
+        }
+
+        
+        /* Attachment Menu Animations - Real Glass */
+        #attachmentMenu {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease-out,
+                        transform 0.2s ease-out;
+            pointer-events: auto;
+            background: rgba(15, 20, 25, 0.25) !important;
+            backdrop-filter: blur(40px) saturate(180%) brightness(1.1) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        #attachmentMenu.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+            transition: opacity 0.2s ease-out,
+                        transform 0.2s ease-out;
+        }
+        
+        #attachmentMenu.closing {
+            opacity: 0 !important;
+            transform: translateY(20px) !important;
+            pointer-events: none;
+            transition: opacity 0.25s ease-in,
+                        transform 0.25s ease-in;
+        }
+
+        /* compact toggle removed; using ai-chat style inline menu */
+        
+        /* Plus button rotation */
+        #attachmentBtn .material-symbols-outlined {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #attachmentBtn.active .material-symbols-outlined {
+            transform: rotate(45deg);
+        }
+        
+        /* Context Menu - Real Glass */
+        .context-menu {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(15, 20, 25, 0.4) 0%, rgba(10, 15, 18, 0.5) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            min-width: 180px;
+            padding: 6px;
+            display: none;
+        }
+        .context-menu.show { display: block; }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .context-menu-item:hover {
+            background: linear-gradient(135deg, rgba(13, 185, 242, 0.6) 0%, rgba(13, 185, 242, 0.8) 100%);
+            color: white;
+            transform: translateX(2px);
+            box-shadow: 0 4px 12px rgba(13, 185, 242, 0.3);
+        }
+        .context-menu-item.danger:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.6) 0%, rgba(239, 68, 68, 0.8) 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .context-menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 4px 0;
+        }
+        
+        /* Hide elements */
+        .login-screen { display: flex; position: fixed; inset: 0; z-index: 100; }
+        .login-screen.hidden { display: none !important; }
+        .chat-screen { display: none; position: fixed; inset: 0; z-index: 50; }
+        .chat-screen.active { display: flex !important; height: 100vh; }
+        
+        /* Mobile responsive */
+        @media (max-width: 1023px) {
+            .desktop-sidebar { display: none !important; }
+            .desktop-chatlist { display: none !important; }
+        }
+        /* Tablet room info overlay */
+        #roomInfoOverlay {
+            display: none;
+        }
+        .tablet-only { display: none; }
+        @media (min-width: 768px) and (max-width: 1279px) {
+            #roomInfoOverlay {
+                display: block;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+                background: rgba(0, 0, 0, 0.55);
+            }
+            #roomInfoOverlay.show {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            #roomInfoPanel {
+                display: flex !important;
+                position: fixed;
+                top: 0;
+                right: 0;
+                height: 100vh;
+                z-index: 60;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                box-shadow: -12px 0 24px rgba(0, 0, 0, 0.4);
+            }
+            #roomInfoPanel.tablet-open {
+                transform: translateX(0);
+            }
+            .tablet-only {
+                display: flex;
+            }
+        }
+        @media (min-width: 1024px) {
+            #mobileBottomNav { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display h-screen flex overflow-hidden selection:bg-primary/30 selection:text-white">
+    
+    <!-- Loading Screen -->
+    <div class="login-screen items-center justify-center bg-background-dark" id="loginScreen">
+        <div class="w-full max-w-md p-8 bg-surface-dark rounded-2xl border border-slate-800 shadow-2xl">
+            <div class="flex flex-col items-center gap-6">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-surface-dark to-primary flex items-center justify-center shadow-lg animate-pulse">
+                    <span class="material-symbols-outlined text-primary text-4xl">waves</span>
+                </div>
+                <div class="text-center">
+                    <img src="/nobackweave.png" alt="WaveChat" class="h-16 w-16 mx-auto mb-4 object-contain" />
+                    <h1 class="text-white text-4xl font-bold mb-2">WAVE</h1>
+                    <p class="text-slate-400 text-sm" data-i18n="chat.checkingAuth">Checking authentication...</p>
+                </div>
+                <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Screen -->
+    <div class="chat-screen" id="chatScreen">
+        <!-- LEFT SIDEBAR (380px) - Chat List -->
+        <aside class="desktop-sidebar w-[380px] flex flex-col bg-surface-dark border-r border-slate-800/40 relative z-20 hidden lg:flex">
+            <!-- Header -->
+            <div class="px-6 pt-6 pb-2 shrink-0">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <img src="/wavechat.png" alt="Wave" class="size-9 rounded-xl object-contain" />
+                        <h1 class="text-xl font-bold tracking-tight text-white" data-i18n="chat.wave">Wave</h1>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-end mb-5">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-3xl font-black text-white tracking-tight" data-i18n="chat.chats">Chats</h2>
+                        <span class="bg-primary text-background-dark text-[10px] font-bold px-1.5 py-0.5 rounded-full" id="unreadChatsCount" style="display: none;">0</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="createJoinRoomBtn" class="size-8 rounded-lg bg-background-dark hover:bg-surface-hover text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-slate-700/50">
+                            <span class="material-symbols-outlined text-[20px]">edit_square</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search -->
+                <div class="relative group mb-2">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="material-symbols-outlined text-slate-500 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+                    </div>
+                    <input id="sidebarSearchInput" class="block w-full pl-10 pr-3 py-2.5 rounded-xl bg-background-dark border border-transparent focus:border-primary/50 focus:ring-0 focus:bg-background-dark/60 placeholder-slate-500 text-slate-200 text-sm transition-all shadow-inner" data-i18n-placeholder="chat.searchConversations" placeholder="Search conversations..." type="text"/>
+                    <div id="sidebarSearchResults" class="absolute top-full left-0 right-0 mt-2 bg-surface-dark border border-slate-700 rounded-lg shadow-xl max-h-64 overflow-y-auto hidden z-50"></div>
+                </div>
+            </div>
+            
+            
+            <!-- Combined Chats List -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar px-4 py-2">
+                <!-- All chats (DMs and Rooms) will be added here dynamically -->
+                <div id="dmsListContainer" class="flex flex-col gap-1">
+                    <!-- Chats will be added here dynamically -->
+                </div>
+            </div>
+            
+            <div id="roomsListContainer" class="hidden"></div>
+            <div id="chatsList" class="hidden"></div>
+            
+            <!-- Bottom Navigation Bar (Sidebar Footer) -->
+            <div class="p-2 bg-[#0b1418] border-t border-slate-800/40">
+                <nav class="flex justify-around items-center rounded-xl bg-background-dark p-1">
+                    <a class="flex flex-col items-center justify-center p-2 rounded-lg text-primary bg-primary/10 flex-1" href="#">
+                        <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+                        <span class="text-[10px] font-medium mt-1" data-i18n="nav.chats">Chats</span>
+                    </a>
+                    <a class="flex flex-col items-center justify-center p-2 rounded-lg text-[#90bccb] hover:text-white hover:bg-surface-hover transition-colors flex-1" href="/ai-chat.html">
+                        <span class="material-symbols-outlined text-[24px]">smart_toy</span>
+                        <span class="text-[10px] font-medium mt-1" data-i18n="nav.ai">AI</span>
+                    </a>
+                    <a class="flex flex-col items-center justify-center p-2 rounded-lg text-[#90bccb] hover:text-white hover:bg-surface-hover transition-colors flex-1" href="/feed.html">
+                        <span class="material-symbols-outlined text-[24px]">newspaper</span>
+                        <span class="text-[10px] font-medium mt-1" data-i18n="nav.feed">Feed</span>
+                    </a>
+                    <a class="flex flex-col items-center justify-center p-2 rounded-lg text-[#90bccb] hover:text-white hover:bg-surface-hover transition-colors flex-1" href="/profile.html">
+                        <span class="material-symbols-outlined text-[24px]">person</span>
+                        <span class="text-[10px] font-medium mt-1" id="userNickname" data-i18n="nav.profile">Profile</span>
+                    </a>
+                    <a class="flex flex-col items-center justify-center p-2 rounded-lg text-[#90bccb] hover:text-white hover:bg-surface-hover transition-colors flex-1" href="/settings.html" id="settingsNavLink">
+                        <span class="material-symbols-outlined text-[24px]">settings</span>
+                        <span class="text-[10px] font-medium mt-1" data-i18n="nav.settings">Settings</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- MAIN CHAT AREA (flex) -->
+        <main class="flex-1 flex flex-col bg-[#0f181c] relative overflow-hidden">
+            <!-- Abstract Background -->
+            <div class="absolute inset-0 z-0 opacity-30 pointer-events-none">
+                <div class="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-primary/20 blur-[130px] rounded-full mix-blend-screen animate-pulse"></div>
+                <div class="absolute bottom-[10%] left-[10%] w-[400px] h-[400px] bg-indigo-600/20 blur-[100px] rounded-full mix-blend-screen"></div>
+            </div>
+            
+            <!-- Top Bar -->
+            <header class="glass-panel h-16 px-6 flex items-center justify-between z-10 bg-surface-dark/50 backdrop-blur-md border-b border-slate-800/40 sticky top-0">
+                <div class="flex items-center gap-4">
+                    <button id="backToRoomBtn" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors lg:hidden">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div class="h-8 w-8 rounded-full bg-surface-lighter overflow-hidden flex items-center justify-center">
+                        <img id="roomAvatar" src="/wavechat.png" alt="Chat avatar" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold text-white flex items-center gap-2" id="roomName" data-i18n="chat.selectChat">
+                            Select a chat
+                        </h1>
+                        <p id="roomStatus" class="text-xs text-primary font-medium"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="toggleRoomInfoBtn" class="w-10 h-10 items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors tablet-only" data-i18n-title="chat.roomInfo" title="Room Info">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                    <a href="/feed.html" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors lg:hidden">
+                        <span class="material-symbols-outlined">newspaper</span>
+                    </a>
+                    <a href="/ai-chat.html" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors lg:hidden">
+                        <span class="material-symbols-outlined">smart_toy</span>
+                    </a>
+                    <a href="/profile.html" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors lg:hidden">
+                        <span class="material-symbols-outlined">person</span>
+                    </a>
+                    <a href="/settings.html" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-lighter text-slate-400 hover:text-primary transition-colors lg:hidden">
+                        <span class="material-symbols-outlined">settings</span>
+                    </a>
+                </div>
+            </header>
+            
+            <!-- Message Feed Container -->
+            <div class="flex-1 relative overflow-hidden">
+                <!-- Message Feed -->
+                <div class="h-full overflow-y-auto px-6 py-6 space-y-6 scroll-smooth custom-scrollbar" id="messagesFeed">
+                    <!-- Pinned Messages Section -->
+                    <div id="pinnedMessages" class="hidden mb-4 bg-surface-dark/50 border border-primary/30 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-[20px]">push_pin</span>
+                                <span class="text-sm font-bold text-white" data-i18n="chat.pinnedMessages">Pinned Messages</span>
+                            </div>
+                            <button id="closePinnedBtn" class="text-slate-400 hover:text-white">
+                                <span class="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                        </div>
+                        <div id="pinnedMessagesList" class="space-y-2 max-h-32 overflow-y-auto"></div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div id="messages" class="space-y-6"></div>
+                </div>
+                
+                <!-- Scroll to Bottom Button -->
+                <button id="scrollToBottomBtn" class="hidden absolute bottom-6 right-6 w-12 h-12 bg-primary hover:bg-primary/90 rounded-full shadow-lg flex items-center justify-center text-white transition-all z-30">
+                    <span class="material-symbols-outlined">arrow_downward</span>
+                    <span id="unreadCount" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="p-6 pt-2 pb-6 z-10 relative">
+                <!-- Typing Indicator -->
+                <div id="typingIndicator" class="mb-2 px-2 text-xs text-slate-400 italic hidden">
+                    <span id="typingText"></span>
+                </div>
+
+                <!-- Image Preview Container -->
+                <div id="imagePreviewContainer" class="hidden mb-2 px-2">
+                    <!-- Image previews will be rendered here -->
+                </div>
+
+                <!-- Hidden file input for images -->
+                <input type="file" id="imageInput" accept="image/*" multiple class="hidden" />
+
+                <div class="bg-surface-dark rounded-xl border border-slate-800 shadow-lg flex items-end p-2 gap-2 relative z-20">
+                    <div class="relative">
+                        <button id="attachmentBtn" class="size-9 shrink-0 flex items-center justify-center rounded-full bg-surface-dark border border-white/5 text-slate-400 hover:text-primary hover:border-primary/50 transition-all active:scale-95">
+                            <span class="material-symbols-outlined text-[24px]">add</span>
+                        </button>
+                        <!-- Inline attach menu (ai-chat style) -->
+                        <div id="attachmentMenu" class="hidden absolute bottom-full left-0 mb-2 bg-surface-dark/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-2 min-w-[200px] transform origin-bottom-left scale-95 opacity-0 transition-all duration-200 ease-out">
+                            <button id="attachImage" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 hover:border-primary/30 border border-transparent transition-all text-left group" title="Upload image for AI analysis (Vision models only)">
+                                <span class="material-symbols-outlined text-primary text-[20px]">image</span>
+                                <div class="flex-1">
+                                    <span class="text-sm font-medium text-white">Image</span>
+                                    <span class="text-xs text-slate-400 block">AI Vision (Qwen)</span>
+                                </div>
+                            </button>
+                            <button id="attachFile" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 hover:border-primary/30 border border-transparent transition-all text-left group mt-1">
+                                <span class="material-symbols-outlined text-orange-400 text-[20px]">attach_file</span>
+                                <span class="text-sm font-medium text-white">File</span>
+                            </button>
+                            <button id="attachSticker" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 hover:border-primary/30 border border-transparent transition-all text-left group mt-1">
+                                <span class="material-symbols-outlined text-purple-400 text-[20px]">emoji_emotions</span>
+                                <span class="text-sm font-medium text-white">Sticker</span>
+                            </button>
+                            <button id="attachAudio" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 hover:border-primary/30 border border-transparent transition-all text-left group mt-1">
+                                <span class="material-symbols-outlined text-emerald-400 text-[20px]">audio_file</span>
+                                <span class="text-sm font-medium text-white">Audio (MP3)</span>
+                            </button>
+                            <div class="h-px bg-slate-700 my-1"></div>
+                            <button id="startVoiceCall" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary/10 hover:border-primary/30 border border-transparent transition-all text-left group">
+                                <span class="material-symbols-outlined text-sky-400 text-[20px]">call</span>
+                                <span class="text-sm font-medium text-white">Voice Call</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-1 py-2">
+                        <input id="messageInput" class="w-full bg-transparent border-none text-sm text-white placeholder-slate-400 focus:ring-0 p-0 outline-none" data-i18n-placeholder="chat.typeMessage" placeholder="Type a message..." type="text"/>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button id="emojiBtn" class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-surface-lighter">
+                            <span class="material-symbols-outlined">sentiment_satisfied</span>
+                        </button>
+                        <button id="pollBtn" class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-surface-lighter">
+                            <span class="material-symbols-outlined">poll</span>
+                        </button>
+                        <button id="voiceBtn" class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-surface-lighter">
+                            <span class="material-symbols-outlined">mic</span>
+                        </button>
+                        <button id="sendButton" class="p-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md shadow-primary/20 transition-all ml-1 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Tablet Room Info Overlay -->
+        <div id="roomInfoOverlay" class="fixed inset-0 z-50"></div>
+        
+        <!-- RIGHT PANEL (320px, XL only) - Room Info -->
+        <aside id="roomInfoPanel" class="w-80 bg-surface-dark border-l border-slate-800 shrink-0 hidden xl:flex flex-col overflow-y-auto">
+            <div class="p-6 flex flex-col items-center border-b border-slate-800">
+                <img src="/wavechat.png" alt="Room" class="w-24 h-24 rounded-full shadow-lg ring-4 ring-background-dark mb-4 object-cover" />
+                <h2 class="text-xl font-bold text-white mb-1" id="roomNameRight" data-i18n="chat.room">Room</h2>
+                <p id="roomSubtitleRight" class="text-sm text-slate-400 text-center mb-4" data-i18n="chat.wavechatRoom">WaveChat room</p>
+                <div class="flex gap-4 w-full">
+                    <button class="flex-1 py-2 rounded-lg bg-surface-lighter hover:bg-slate-700 text-sm font-medium text-white transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">notifications_off</span>
+                        <span data-i18n="chat.mute">Mute</span>
+                    </button>
+                    <button class="flex-1 py-2 rounded-lg bg-surface-lighter hover:bg-slate-700 text-sm font-medium text-white transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">group_add</span>
+                        <span data-i18n="chat.add">Add</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 flex-1">
+                <h3 class="text-sm font-bold text-white mb-3" data-i18n="chat.roomSettings">Room Settings</h3>
+                
+                <div class="mb-4 p-3 bg-surface-lighter rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-white" data-i18n="chat.notifications">Notifications</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notificationToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-slate-400" data-i18n="chat.getNotified">Get notified for new messages</p>
+                </div>
+                
+                <div class="mb-4" id="roomActionContainer">
+                    <button id="createNewRoomBtn" class="hidden w-full py-2 px-4 bg-primary hover:bg-primary/90 border border-primary rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                        <span data-i18n="chat.createNewRoom">Create New Room</span>
+                    </button>
+                    
+                    <button id="regenerateCodeBtn" class="hidden w-full py-2 px-4 bg-surface-lighter hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">refresh</span>
+                        <span data-i18n="chat.regenerateRoomCode">Regenerate Room Code</span>
+                    </button>
+                </div>
+                
+                <h3 class="text-sm font-bold text-white mb-3 mt-6" data-i18n="chat.roomMembers">Room Members</h3>
+                <div id="roomMembersList" class="space-y-2 mb-6">
+                    <div class="text-xs text-slate-400 text-center py-2" data-i18n="chat.noRoomJoined">No room joined</div>
+                </div>
+                
+                <h3 class="text-sm font-bold text-white mb-3 mt-6" data-i18n="chat.roomInfo">Room Info</h3>
+                <div id="roomInfoContainer" class="space-y-2">
+                    <div id="noRoomState" class="p-4 bg-surface-lighter rounded-lg text-center">
+                        <span class="material-symbols-outlined text-slate-500 text-4xl mb-2">meeting_room</span>
+                        <p class="text-xs text-slate-400 mb-3" data-i18n="chat.notInRoomYet">Not in a room yet</p>
+                        <button id="quickCreateRoomBtn" class="w-full py-2 px-4 bg-primary hover:bg-primary/90 rounded-lg text-xs font-medium text-white transition-colors" data-i18n="chat.createRoom">
+                            Create Room
+                        </button>
+                    </div>
+                    
+                    <div id="roomCodeContainer" class="hidden p-3 bg-surface-lighter rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-400" data-i18n="chat.roomCode">Room Code</span>
+                            <button id="copyRoomCodeBtn" class="text-xs text-primary hover:text-primary/90 transition-colors flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                                <span data-i18n="chat.copy">Copy</span>
+                            </button>
+                        </div>
+                        <p id="roomCodeDisplay" class="text-sm font-mono font-bold text-white mt-1">-</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 z-50 bg-surface-dark/95 backdrop-blur-lg border-t border-slate-800">
+        <div class="flex justify-between items-center h-20 px-6 pb-2">
+            <button data-tab="chats" class="mobile-tab-btn flex flex-col items-center gap-1 w-12 text-primary transition-colors">
+                <div class="w-10 h-8 flex items-center justify-center bg-primary/10 rounded-full">
+                    <span class="material-symbols-outlined fill-current" style="font-size: 24px;">chat_bubble</span>
+                </div>
+                <span class="text-[10px] font-semibold" data-i18n="nav.chats">Chats</span>
+            </button>
+            
+            <a href="/feed.html" class="mobile-tab-btn flex flex-col items-center justify-center -mt-6">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-[0_8px_16px_rgba(43,140,238,0.3)] flex items-center justify-center text-white transform active:scale-95 transition-transform">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">newspaper</span>
+                </div>
+            </a>
+            
+            <a href="/ai-chat.html" class="mobile-tab-btn flex flex-col items-center gap-1 w-12 text-slate-400 hover:text-slate-200 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 24px;">smart_toy</span>
+                <span class="text-[10px] font-medium" data-i18n="nav.ai">AI</span>
+            </a>
+            
+            <a href="/profile.html" class="mobile-tab-btn flex flex-col items-center gap-1 w-12 text-slate-400 hover:text-slate-200 transition-colors">
+                <div class="w-6 h-6 rounded-full overflow-hidden bg-slate-700 ring-2 ring-transparent hover:ring-primary transition-all">
+                    <span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
+                </div>
+                <span class="text-[10px] font-medium" data-i18n="nav.profile">Profile</span>
+            </a>
+        </div>
+    </nav>
+    
+    <!-- attachmentMenu moved next to button for compact UI -->
+    
+    <!-- Poll Creation Modal -->
+    <div id="pollModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-surface-dark border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Create Poll</h3>
+                <button id="closePollModal" class="text-slate-400 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <input id="pollQuestion" type="text" placeholder="Ask a question..." class="w-full px-4 py-3 bg-surface-lighter border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"/>
+                <div id="pollOptions" class="space-y-2">
+                    <input type="text" placeholder="Option 1" class="poll-option w-full px-4 py-2 bg-surface-lighter border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"/>
+                    <input type="text" placeholder="Option 2" class="poll-option w-full px-4 py-2 bg-surface-lighter border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"/>
+                </div>
+                <button id="addPollOption" class="text-sm text-primary hover:text-primary/90 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    Add Option
+                </button>
+                <div class="flex gap-3">
+                    <button id="cancelPoll" class="flex-1 py-2 px-4 bg-surface-lighter hover:bg-slate-700 rounded-lg text-white font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button id="createPoll" class="flex-1 py-2 px-4 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors">
+                        Create Poll
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reaction Picker Modal -->
+    <div id="reactionPicker" class="fixed bg-surface-dark border border-slate-700 rounded-xl p-3 shadow-2xl z-50 hidden">
+        <div class="grid grid-cols-8 gap-2">
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">👍</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">❤️</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">😂</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">😮</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">😢</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">🙏</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">🎉</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">🔥</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">👏</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">💯</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">✨</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">🚀</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">👀</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">🤔</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">😎</button>
+            <button class="reaction-btn text-2xl hover:scale-125 transition-transform">💪</button>
+        </div>
+    </div>
+    
+    <!-- Create/Join Room Modal -->
+    <div id="createJoinRoomModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-surface-dark border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Room</h3>
+                <button id="closeCreateJoinModal" class="text-slate-400 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="flex gap-2 bg-background-dark rounded-lg p-1 mb-4">
+                <button id="createRoomTab" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-primary text-white" data-i18n="chat.createRoom">
+                    Create Room
+                </button>
+                <button id="joinRoomTab" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white" data-i18n="chat.joinRoom">
+                    Join Room
+                </button>
+                <button id="createChannelTab" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white" data-i18n="chat.createChannelTab">
+                    Create Channel
+                </button>
+            </div>
+            
+            <!-- Create Room Content -->
+            <div id="createRoomContent" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.roomNameOptional">Room Name (Optional)</label>
+                    <input id="roomNameInput" class="block w-full px-3 py-2 border-none rounded-lg bg-surface-lighter text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="My Awesome Room" data-i18n-placeholder="chat.myAwesomeRoom" type="text"/>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.roomType">Room Type</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="tempRoomBtn" class="p-3 rounded-lg border-2 border-primary bg-primary/10 text-white transition-all">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="material-symbols-outlined text-2xl">schedule</span>
+                                <span class="text-sm font-medium" data-i18n="chat.temporary">Temporary</span>
+                                <span class="text-xs text-slate-400" data-i18n="chat.expiresWhenEmpty">Expires when empty</span>
+                            </div>
+                        </button>
+                        <button id="foreverRoomBtn" class="p-3 rounded-lg border-2 border-slate-700 bg-surface-lighter text-slate-400 hover:text-white hover:border-slate-600 transition-all">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="material-symbols-outlined text-2xl">all_inclusive</span>
+                                <span class="text-sm font-medium" data-i18n="chat.forever">Forever</span>
+                                <span class="text-xs text-slate-400" data-i18n="chat.permanentRoom">Permanent room</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Settings -->
+                <div class="border-t border-slate-700 pt-3">
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.roomSettingsLabel">Room Settings</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between text-sm text-slate-300">
+                            <span data-i18n="chat.allowPolls">Allow Polls</span>
+                            <input type="checkbox" id="allowPolls" checked class="w-4 h-4 text-primary bg-surface-lighter border-slate-600 rounded focus:ring-primary">
+                        </label>
+                        <label class="flex items-center justify-between text-sm text-slate-300">
+                            <span data-i18n="chat.allowVoiceMessages">Allow Voice Messages</span>
+                            <input type="checkbox" id="allowVoice" checked class="w-4 h-4 text-primary bg-surface-lighter border-slate-600 rounded focus:ring-primary">
+                        </label>
+                        <label class="flex items-center justify-between text-sm text-slate-300">
+                            <span data-i18n="chat.allowFiles">Allow Files</span>
+                            <input type="checkbox" id="allowFiles" checked class="w-4 h-4 text-primary bg-surface-lighter border-slate-600 rounded focus:ring-primary">
+                        </label>
+                        <label class="flex items-center justify-between text-sm text-slate-300">
+                            <span data-i18n="chat.allowImages">Allow Images</span>
+                            <input type="checkbox" id="allowImages" checked class="w-4 h-4 text-primary bg-surface-lighter border-slate-600 rounded focus:ring-primary">
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="createRoomBtn" class="w-full py-2 px-4 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors" data-i18n="chat.createRoom">
+                    Create Room
+                </button>
+            </div>
+            
+            <!-- Join Room Content -->
+            <div id="joinRoomContent" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.roomCode">Room Code</label>
+                    <input id="roomCodeInput" class="block w-full px-3 py-2 border-none rounded-lg bg-surface-lighter text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Enter 6-character room code..." data-i18n-placeholder="chat.enterRoomCode" type="text" maxlength="6"/>
+                </div>
+                <button id="joinRoomBtn" class="w-full py-2 px-4 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors" data-i18n="chat.joinRoom">
+                    Join Room
+                </button>
+            </div>
+
+            <!-- Create Channel Content (admin only) -->
+            <div id="createChannelContent" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.channelName">Channel Name</label>
+                    <input id="channelNameInput" class="block w-full px-3 py-2 border-none rounded-lg bg-surface-lighter text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Announcements" data-i18n-placeholder="chat.channelNamePlaceholder" type="text"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" data-i18n="chat.channelDescriptionOptional">Description (optional)</label>
+                    <textarea id="channelDescriptionInput" class="block w-full px-3 py-2 border-none rounded-lg bg-surface-lighter text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Updates and news" data-i18n-placeholder="chat.channelDescriptionPlaceholder"></textarea>
+                </div>
+                <button id="createChannelBtn" class="w-full py-2 px-4 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors" data-i18n="chat.createChannel">
+                    Create Channel
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New DM Modal -->
+    <div id="newDMModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-surface-dark border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">New Direct Message</h3>
+                <button id="closeNewDMModal" class="text-slate-400 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Search for a user</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+                        </div>
+                        <input id="dmUserSearchInput" class="block w-full pl-10 pr-3 py-2 border-none rounded-lg bg-surface-lighter text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Type username..." type="text"/>
+                    </div>
+                    <div id="dmSearchResults" class="mt-2 max-h-64 overflow-y-auto space-y-1 hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-surface-dark border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-white">Settings</h3>
+                <button id="closeSettingsModal" class="text-slate-400 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="pb-4 border-b border-slate-700">
+                    <h4 class="text-sm font-bold text-white mb-3">Profile</h4>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded-full bg-surface-lighter flex items-center justify-center">
+                            <span class="material-symbols-outlined text-slate-400">person</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-white" id="settingsNickname">User</p>
+                            <p class="text-xs text-slate-400" id="settingsUsername">@username</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pb-4 border-b border-slate-700">
+                    <h4 class="text-sm font-bold text-white mb-3">Notifications</h4>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-300">Desktop Notifications</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="settingsNotificationToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="pb-4 border-b border-slate-700">
+                    <h4 class="text-sm font-bold text-white mb-3">Appearance</h4>
+                    <button class="w-full py-2 px-4 bg-surface-lighter hover:bg-slate-700 rounded-lg text-sm text-white transition-colors text-left">
+                        Theme: Dark Mode
+                    </button>
+                </div>
+                
+                <div class="space-y-2">
+                    <button id="clearChatBtn" class="w-full py-2 px-4 bg-surface-lighter hover:bg-slate-700 rounded-lg text-sm text-white transition-colors text-left flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+                        Clear Chat History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Invite Notifications Container -->
+    <div id="inviteNotifications" class="fixed top-20 right-4 z-50 space-y-3 max-w-sm"></div>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- i18n System -->
+    <script src="/js/i18n.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/state.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <!-- NVIDIA NIM AI Client -->
+    <script type="module" src="/js/nvidiaClient.js"></script>
+    
+    <!-- AI Image Chat Module -->
+    <script type="module" src="/js/ai-image-chat.js"></script>
+    
+    <script>
+        // Initialize i18n on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.i18n) {
+                await window.i18n.init();
+            }
+        });
+    </script>
+
+    <script>
+        // Tablet Room Info Overlay (chat.html)
+        document.addEventListener('DOMContentLoaded', () => {
+            const isTablet = window.matchMedia('(min-width: 768px) and (max-width: 1279px)');
+            const panel = document.getElementById('roomInfoPanel');
+            const overlay = document.getElementById('roomInfoOverlay');
+            const toggleBtn = document.getElementById('toggleRoomInfoBtn');
+
+            if (!panel || !overlay || !toggleBtn) return;
+
+            const openPanel = () => {
+                if (!isTablet.matches) return;
+                panel.classList.add('tablet-open');
+                overlay.classList.add('show');
+            };
+
+            const closePanel = () => {
+                panel.classList.remove('tablet-open');
+                overlay.classList.remove('show');
+            };
+
+            toggleBtn.addEventListener('click', () => {
+                if (panel.classList.contains('tablet-open')) {
+                    closePanel();
+                } else {
+                    openPanel();
+                }
+            });
+
+            overlay.addEventListener('click', closePanel);
+
+            // Swipe disabled on desktop/tablet (button + overlay only)
+        });
+    </script>
+    
+    <!-- Context Menu -->
+    <script>
+        // Context Menu - Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            let contextMenuTarget = null;
+            const contextMenu = document.getElementById('messageContextMenu');
+            const messagesContainer = document.getElementById('messages');
+            const contextMenuRoot = messagesContainer || document;
+            const menuPadding = 8;
+            let lastMenuAction = { action: null, messageId: null, time: 0 };
+
+            // Block browser menu if our menu is open
+            document.addEventListener('contextmenu', function(e) {
+                if (contextMenu?.classList.contains('show')) {
+                    e.preventDefault();
+                }
+            }, true);
+            
+            if (!contextMenu) {
+                console.error('[Context Menu] Menu element not found!');
+                return;
+            }
+            
+            console.log('[Context Menu] Menu element found:', contextMenu);
+            
+            const isOwnMessageElement = (messageEl) => {
+                if (!messageEl) return false;
+                const userId = localStorage.getItem('userId');
+                const username = (localStorage.getItem('username') || '').replace('@', '');
+                const nickname = (localStorage.getItem('nickname') || '').replace('@', '');
+                const senderId = messageEl.dataset.senderId || '';
+                const senderName = (messageEl.dataset.senderName || '').replace('@', '');
+                return (senderId && userId && senderId === userId) ||
+                       (senderName && (senderName === username || senderName === nickname));
+            };
+
+            function openContextMenuAt(x, y, messageEl) {
+                if (!contextMenu || !messageEl) return;
+
+                contextMenuTarget = messageEl;
+
+
+                const editBtn = contextMenu.querySelector('[data-action="edit"]');
+                const deleteBtn = contextMenu.querySelector('[data-action="delete"]');
+                const downloadBtn = contextMenu.querySelector('[data-action="download"]');
+                const isTempMessage = /^msg_|^uploading_/i.test(messageEl.dataset.messageId || '');
+
+                if (isOwnMessageElement(messageEl) && !isTempMessage) {
+                    if (editBtn) editBtn.style.display = 'flex';
+                    if (deleteBtn) deleteBtn.style.display = 'flex';
+                } else {
+                    if (editBtn) editBtn.style.display = 'none';
+                    if (deleteBtn) deleteBtn.style.display = 'none';
+                }
+
+                if (downloadBtn) {
+                    const downloadUrl = messageEl.dataset.downloadUrl;
+                    downloadBtn.style.display = downloadUrl ? 'flex' : 'none';
+                }
+
+                contextMenu.classList.add('show');
+
+                // Position menu within viewport
+                const menuRect = contextMenu.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                let left = x;
+                let top = y;
+
+                if (left + menuRect.width + menuPadding > viewportWidth) {
+                    left = Math.max(menuPadding, viewportWidth - menuRect.width - menuPadding);
+                }
+
+                if (top + menuRect.height + menuPadding > viewportHeight) {
+                    top = Math.max(menuPadding, viewportHeight - menuRect.height - menuPadding);
+                }
+
+                contextMenu.style.left = left + 'px';
+                contextMenu.style.top = top + 'px';
+            }
+
+            // Disable browser context menu and only allow on message bubbles
+            contextMenuRoot.addEventListener('contextmenu', function(e) {
+                console.log('[Context Menu] Right-click detected on:', e.target);
+
+                const bubbleEl = e.target.closest('[data-message-bubble]');
+                const messageEl = bubbleEl ? bubbleEl.closest('[data-message-id]') : null;
+                console.log('[Context Menu] Message element found:', !!messageEl);
+
+                e.preventDefault();
+
+                if (messageEl) {
+                    openContextMenuAt(e.clientX, e.clientY, messageEl);
+                } else {
+                    contextMenu.classList.remove('show');
+                }
+            }, true);
+
+            // Fallback: open on right mouse button down
+            contextMenuRoot.addEventListener('mousedown', function(e) {
+                if (e.button !== 2) return;
+                const bubbleEl = e.target.closest('[data-message-bubble]');
+                const messageEl = bubbleEl ? bubbleEl.closest('[data-message-id]') : null;
+                e.preventDefault();
+                if (messageEl) {
+                    openContextMenuAt(e.clientX, e.clientY, messageEl);
+                } else {
+                    contextMenu.classList.remove('show');
+                }
+            }, true);
+            
+            // Long press for mobile
+            let longPressTimer;
+            contextMenuRoot.addEventListener('touchstart', function(e) {
+                const bubbleEl = e.target.closest('[data-message-bubble]');
+                const messageEl = bubbleEl ? bubbleEl.closest('[data-message-id]') : null;
+                if (messageEl) {
+                    longPressTimer = setTimeout(function() {
+                        contextMenuTarget = messageEl;
+                        const touch = e.touches[0];
+                        openContextMenuAt(touch.clientX, touch.clientY, messageEl);
+                        
+                        // Vibrate on mobile
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                    }, 500);
+                }
+            });
+            
+            document.addEventListener('touchend', function() {
+                clearTimeout(longPressTimer);
+            });
+            
+            document.addEventListener('touchmove', function() {
+                clearTimeout(longPressTimer);
+            });
+            
+            // Hide context menu on click outside
+            document.addEventListener('click', function(e) {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.classList.remove('show');
+                }
+            });
+            
+            // Handle context menu actions
+            contextMenu.addEventListener('click', function(e) {
+                const action = e.target.closest('[data-action]')?.dataset.action;
+                if (!action || !contextMenuTarget) return;
+                
+                const messageId = contextMenuTarget.dataset.messageId;
+                
+                // Find message text from various possible locations
+                let messageText = '';
+                const textElement = contextMenuTarget.querySelector('.message-text') || 
+                                  contextMenuTarget.querySelector('p') ||
+                                  contextMenuTarget.querySelector('div[class*="text"]');
+                if (textElement) {
+                    messageText = textElement.textContent || textElement.innerText || '';
+                }
+                
+                console.log('[Context Menu] Action:', action, 'MessageId:', messageId, 'Text:', messageText);
+                
+                const isTempMessage = /^msg_|^uploading_/i.test(messageId || '');
+                const now = Date.now();
+                if (lastMenuAction.action === action && lastMenuAction.messageId === messageId && (now - lastMenuAction.time) < 600) {
+                    return;
+                }
+                lastMenuAction = { action, messageId, time: now };
+
+                switch(action) {
+                    case 'reply':
+                        console.log('[Context Menu] Reply to message:', messageId);
+                        // Set reply mode in the input
+                        const messageInput = document.getElementById('messageInput');
+                        if (messageInput) {
+                            const downloadType = contextMenuTarget?.dataset?.downloadType;
+                            const downloadName = contextMenuTarget?.dataset?.downloadName;
+                            let replyPreviewText = messageText;
+
+                            if (downloadType === 'image') {
+                                replyPreviewText = 'Image';
+                            } else if (downloadType === 'file') {
+                                replyPreviewText = downloadName || 'File';
+                            }
+
+                            // Show reply indicator
+                            const replyIndicator = document.createElement('div');
+                            replyIndicator.id = 'replyIndicator';
+                            replyIndicator.className = 'flex items-center justify-between px-4 py-2 bg-surface-lighter border-l-4 border-primary mb-2';
+                            replyIndicator.innerHTML = `
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-[18px]">reply</span>
+                                    <div>
+                                        <p class="text-xs text-primary font-medium">Replying to message</p>
+                                        <p class="text-xs text-slate-400 truncate max-w-[300px]">${replyPreviewText || ''}</p>
+                                    </div>
+                                </div>
+                                <button onclick="document.getElementById('replyIndicator').remove()" class="text-slate-400 hover:text-white">
+                                    <span class="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            `;
+                            
+                            // Insert before message input
+                            const inputContainer = messageInput.parentElement;
+                            const existingIndicator = document.getElementById('replyIndicator');
+                            if (existingIndicator) existingIndicator.remove();
+                            replyIndicator.dataset.replyToId = messageId;
+                            replyIndicator.dataset.replyToName = contextMenuTarget?.dataset?.senderName || 'User';
+                            replyIndicator.dataset.replyToText = replyPreviewText || '';
+                            inputContainer.insertBefore(replyIndicator, inputContainer.firstChild);
+                            
+                            // Focus input
+                            messageInput.focus();
+                        }
+                        break;
+                        
+                    case 'forward':
+                        console.log('[Context Menu] Forward message:', messageId);
+                        // Show forward modal with room/user selection
+                        alert('Forward feature: Select a chat to forward this message to.\n\nComing soon!');
+                        break;
+                        
+                    case 'copy':
+                        console.log('[Context Menu] Copy message text:', messageText);
+                        if (messageText && messageText.trim()) {
+                            navigator.clipboard.writeText(messageText.trim()).then(() => {
+                                console.log('[Context Menu] Message copied to clipboard');
+                                // Show toast notification
+                                const toast = document.createElement('div');
+                                toast.className = 'fixed bottom-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
+                                toast.textContent = 'Message copied!';
+                                document.body.appendChild(toast);
+                                setTimeout(() => {
+                                    toast.style.opacity = '0';
+                                    toast.style.transition = 'opacity 0.3s';
+                                    setTimeout(() => toast.remove(), 300);
+                                }, 2000);
+                            }).catch(err => {
+                                console.error('[Context Menu] Failed to copy:', err);
+                                alert('Failed to copy message');
+                            });
+                        } else {
+                            console.warn('[Context Menu] No text to copy');
+                            alert('No text to copy');
+                        }
+                        break;
+
+                    case 'download':
+                        console.log('[Context Menu] Download message:', messageId);
+                        const downloadUrl = contextMenuTarget.dataset.downloadUrl;
+                        const downloadName = contextMenuTarget.dataset.downloadName || 'download';
+                        if (downloadUrl) {
+                            fetch(downloadUrl)
+                                .then(response => response.blob())
+                                .then(blob => {
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = downloadName;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                })
+                                .catch(err => {
+                                    console.error('[Context Menu] Download failed:', err);
+                                    window.open(downloadUrl, '_blank');
+                                });
+                        }
+                        break;
+                        
+                    case 'ask-ai':
+                        console.log('[Context Menu] Ask AI about message:', messageText);
+                        if (messageText && messageText.trim()) {
+                            // Show loading indicator
+                            const loadingToast = document.createElement('div');
+                            loadingToast.id = 'aiLoadingToast';
+                            loadingToast.className = 'fixed bottom-4 right-4 bg-surface-dark text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3 border border-primary';
+                            loadingToast.innerHTML = `
+                                <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                                <span>Asking AI...</span>
+                            `;
+                            document.body.appendChild(loadingToast);
+                            
+                            // Add loading message to chat
+                            const loadingMessageId = `ai_loading_${Date.now()}`;
+                            state.addMessage({
+                                id: loadingMessageId,
+                                type: 'system',
+                                content: '🤖 AI is thinking...',
+                                timestamp: new Date()
+                            });
+                            
+                            // Scroll to bottom to show loading message
+                            setTimeout(() => {
+                                const messagesContainer = document.getElementById('messages');
+                                if (messagesContainer) {
+                                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                }
+                            }, 100);
+                            
+                            // Call AI API (same backend as AI chat)
+                            fetch('/api/ai-chat', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    messages: [
+                                        {
+                                            role: 'user',
+                                            content: messageText.trim()
+                                        }
+                                    ],
+                                    enableSearch: false,
+                                    thinking: false,
+                                    model: 'auto'
+                                })
+                            })
+                            .then(async response => {
+                                if (!response.ok) {
+                                    let errorMessage = `HTTP error! status: ${response.status}`;
+                                    try {
+                                        const errorData = await response.json();
+                                        errorMessage = errorData?.message || errorData?.error || errorMessage;
+                                    } catch (_) {
+                                        // ignore JSON parse errors
+                                    }
+                                    throw new Error(errorMessage);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('[Context Menu] AI response received:', data);
+                                
+                                // Remove loading toast
+                                loadingToast.remove();
+                                
+                                // Remove loading message
+                                state.removeMessage(loadingMessageId);
+                                
+                                // Get response from API - check multiple possible fields
+                                const aiResponse = data.response || data.message || data.content;
+                                
+                                console.log('[Context Menu] Extracted AI response:', aiResponse ? 'Found' : 'Not found');
+                                
+                                if (aiResponse && aiResponse.trim()) {
+                                    // Add AI response as a message in chat
+                                    state.addMessage({
+                                        id: `ai_response_${Date.now()}`,
+                                        type: 'ai',
+                                        content: aiResponse,
+                                        senderNickname: 'Wave AI',
+                                        timestamp: new Date(),
+                                        isAI: true
+                                    });
+                                    
+                                    // Scroll to bottom to show AI response
+                                    setTimeout(() => {
+                                        const messagesContainer = document.getElementById('messages');
+                                        if (messagesContainer) {
+                                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                        }
+                                    }, 100);
+                                    
+                                    // Show success toast
+                                    const successToast = document.createElement('div');
+                                    successToast.className = 'fixed bottom-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                                    successToast.textContent = '✓ AI response received';
+                                    document.body.appendChild(successToast);
+                                    setTimeout(() => successToast.remove(), 2000);
+                                } else {
+                                    console.error('[Context Menu] Response data:', data);
+                                    throw new Error('No response from AI');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('[Context Menu] AI request failed:', err);
+                                loadingToast.remove();
+                                
+                                // Remove loading message
+                                state.removeMessage(loadingMessageId);
+                                
+                                // Show error toast
+                                const errorToast = document.createElement('div');
+                                errorToast.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                                errorToast.textContent = 'Failed to get AI response: ' + err.message;
+                                document.body.appendChild(errorToast);
+                                setTimeout(() => errorToast.remove(), 3000);
+                            });
+                        } else {
+                            alert('No text to send to AI');
+                        }
+                        break;
+                        
+                    case 'edit':
+                        console.log('[Context Menu] Edit message:', messageId);
+                        // Check if user owns the message
+                        if (isOwnMessageElement(contextMenuTarget) && !isTempMessage) {
+                            // Dispatch edit event
+                            const editEvent = new CustomEvent('message:edit', {
+                                detail: { messageId, content: messageText }
+                            });
+                            document.dispatchEvent(editEvent);
+                        } else {
+                            alert(isTempMessage ? 'Message is still sending. Try again in a moment.' : 'You can only edit your own messages');
+                        }
+                        break;
+                        
+                    case 'delete':
+                        console.log('[Context Menu] Delete message:', messageId);
+                        // Check if user owns the message
+                        if (isOwnMessageElement(contextMenuTarget) && !isTempMessage) {
+                            // Confirm deletion
+                            if (confirm('Delete this message?')) {
+                                // Dispatch delete event
+                                const deleteEvent = new CustomEvent('message:delete', {
+                                    detail: { messageId }
+                                });
+                                document.dispatchEvent(deleteEvent);
+                            }
+                        } else {
+                            alert(isTempMessage ? 'Message is still sending. Try again in a moment.' : 'You can only delete your own messages');
+                        }
+                        break;
+                }
+                
+                contextMenu.classList.remove('show');
+            });
+        });
+    </script>
+
+    <!-- Member Context Menu -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const memberMenu = document.getElementById('memberContextMenu');
+            const roomMembersList = document.getElementById('roomMembersList');
+            if (!memberMenu || !roomMembersList) return;
+
+            let memberTarget = null;
+            const menuPadding = 8;
+
+            const showToast = (text) => {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-surface-dark text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                toast.textContent = text;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            };
+
+            const updateList = (key, value) => {
+                const list = JSON.parse(localStorage.getItem(key) || '[]');
+                if (!list.includes(value)) {
+                    list.push(value);
+                    localStorage.setItem(key, JSON.stringify(list));
+                }
+            };
+
+            const openMemberMenu = (x, y, targetEl) => {
+                const memberName = targetEl?.dataset?.memberName;
+                if (!memberName) return;
+
+                const myNickname = localStorage.getItem('nickname');
+                if (myNickname && memberName === myNickname) return;
+
+                memberTarget = targetEl;
+                memberMenu.classList.add('show');
+
+                const menuRect = memberMenu.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                let left = x;
+                let top = y;
+
+                if (left + menuRect.width + menuPadding > viewportWidth) {
+                    left = Math.max(menuPadding, viewportWidth - menuRect.width - menuPadding);
+                }
+
+                if (top + menuRect.height + menuPadding > viewportHeight) {
+                    top = Math.max(menuPadding, viewportHeight - menuRect.height - menuPadding);
+                }
+
+                memberMenu.style.left = left + 'px';
+                memberMenu.style.top = top + 'px';
+            };
+
+            roomMembersList.addEventListener('contextmenu', function(e) {
+                const memberEl = e.target.closest('[data-member-name]');
+                if (memberEl) {
+                    e.preventDefault();
+                    openMemberMenu(e.clientX, e.clientY, memberEl);
+                }
+            }, true);
+
+            roomMembersList.addEventListener('mousedown', function(e) {
+                if (e.button !== 2) return;
+                const memberEl = e.target.closest('[data-member-name]');
+                if (memberEl) {
+                    e.preventDefault();
+                    openMemberMenu(e.clientX, e.clientY, memberEl);
+                }
+            }, true);
+
+            let longPressTimer;
+            roomMembersList.addEventListener('touchstart', function(e) {
+                const memberEl = e.target.closest('[data-member-name]');
+                if (memberEl) {
+                    longPressTimer = setTimeout(function() {
+                        const touch = e.touches[0];
+                        openMemberMenu(touch.clientX, touch.clientY, memberEl);
+                        if (navigator.vibrate) navigator.vibrate(40);
+                    }, 500);
+                }
+            });
+
+            roomMembersList.addEventListener('touchend', function() {
+                clearTimeout(longPressTimer);
+            });
+
+            roomMembersList.addEventListener('touchmove', function() {
+                clearTimeout(longPressTimer);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!memberMenu.contains(e.target)) {
+                    memberMenu.classList.remove('show');
+                }
+            });
+
+            memberMenu.addEventListener('click', function(e) {
+                const action = e.target.closest('[data-action]')?.dataset.action;
+                if (!action || !memberTarget) return;
+
+                const memberName = memberTarget.dataset.memberName;
+                if (!memberName) return;
+
+                switch (action) {
+                    case 'member-mute':
+                        updateList('mutedUsers', memberName);
+                        showToast(`${memberName} muted`);
+                        break;
+                    case 'member-block':
+                        updateList('blockedUsers', memberName);
+                        showToast(`${memberName} blocked`);
+                        break;
+                    case 'member-add-friend':
+                        updateList('friends', memberName);
+                        showToast(`${memberName} added as friend`);
+                        break;
+                    case 'member-delete':
+                        memberTarget.remove();
+                        showToast(`${memberName} removed`);
+                        break;
+                }
+
+                memberMenu.classList.remove('show');
+            });
+        });
+    </script>
+    
+    <!-- Attachment Menu Handler removed (handled in app.js) -->
+    
+    <!-- Mobile back button handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const backBtn = document.getElementById('backToRoomBtn');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    const isMobile = window.innerWidth <= 1023;
+                    if (isMobile) {
+                        window.location.href = '/mobile/chat.html';
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Context Menu -->
+    <div id="messageContextMenu" class="context-menu">
+        <div class="context-menu-item" data-action="reply">
+            <span class="material-symbols-outlined text-[20px]">reply</span>
+            <span>Reply</span>
+        </div>
+        <div class="context-menu-item" data-action="forward">
+            <span class="material-symbols-outlined text-[20px]">forward</span>
+            <span>Forward</span>
+        </div>
+        <div class="context-menu-item" data-action="copy">
+            <span class="material-symbols-outlined text-[20px]">content_copy</span>
+            <span>Copy</span>
+        </div>
+        <div class="context-menu-item" data-action="download" style="display: none;">
+            <span class="material-symbols-outlined text-[20px]">download</span>
+            <span>Download</span>
+        </div>
+        <div class="context-menu-item" data-action="ask-ai">
+            <span class="material-symbols-outlined text-[20px]">psychology</span>
+            <span>Ask AI</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" data-action="edit">
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+            <span>Edit</span>
+        </div>
+        <div class="context-menu-item danger" data-action="delete">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Member Context Menu -->
+    <div id="memberContextMenu" class="context-menu">
+        <div class="context-menu-item" data-action="member-mute">
+            <span class="material-symbols-outlined text-[20px]">volume_off</span>
+            <span>Mute</span>
+        </div>
+        <div class="context-menu-item" data-action="member-block">
+            <span class="material-symbols-outlined text-[20px]">block</span>
+            <span>Block</span>
+        </div>
+        <div class="context-menu-item" data-action="member-add-friend">
+            <span class="material-symbols-outlined text-[20px]">person_add</span>
+            <span>Add Friend</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" data-action="member-delete">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+            <span>Delete</span>
+        </div>
+    </div>
+    
+    <!-- Background Application Script -->
+    <!-- Load Theme Colors -->
+    <script>
+        (function() {
+            const primary = localStorage.getItem('themeColorPrimary');
+            const secondary = localStorage.getItem('themeColorSecondary');
+            const tertiary = localStorage.getItem('themeColorTertiary');
+            const background = localStorage.getItem('themeColorBackground');
+            const surface = localStorage.getItem('themeColorSurface');
+            const highlight = localStorage.getItem('themeColorHighlight');
+            
+            if (primary) document.documentElement.style.setProperty('--color-primary', primary);
+            if (secondary) document.documentElement.style.setProperty('--color-secondary', secondary);
+            if (tertiary) document.documentElement.style.setProperty('--color-tertiary', tertiary);
+            if (background) {
+                document.documentElement.style.setProperty('--bg-page', background);
+                document.body.style.backgroundColor = background;
+                // Apply to main chat area
+                const mainArea = document.querySelector('main.flex-1');
+                if (mainArea) mainArea.style.backgroundColor = background;
+            }
+            if (surface) {
+                document.documentElement.style.setProperty('--bg-surface', surface);
+                // Apply to surface elements including sidebars
+                setTimeout(() => {
+                    const surfaceElements = document.querySelectorAll('.bg-surface-dark, aside.desktop-sidebar, aside#roomInfoPanel');
+                    surfaceElements.forEach(el => el.style.backgroundColor = surface);
+                }, 100);
+            }
+            if (highlight) {
+                document.documentElement.style.setProperty('--surface-hover', highlight);
+                document.documentElement.style.setProperty('--bg-surface-lighter', highlight);
+            }
+        })();
+    </script>
+    
+    <!-- Load Background Image -->
+    <script>
+        // Load transparency mode from localStorage
+        (function() {
+            const isTransparent = localStorage.getItem('transparencyMode') === 'true';
+            if (isTransparent) {
+                document.body.classList.add('transparency-mode');
+            }
+        })();
+        
+        (function() {
+            const chatBackground = localStorage.getItem('chatBackground') || 'none';
+            const bgOpacity = localStorage.getItem('bgOpacity') || '10';
+            const bgBlur = localStorage.getItem('bgBlur') || '4';
+            
+            if (chatBackground === 'none') {
+                return; // No background
+            }
+            
+            const mainChatArea = document.querySelector('main.flex-1');
+            if (!mainChatArea) return;
+            
+            // Create background element
+            const bgElement = document.createElement('div');
+            bgElement.id = 'chatBackground';
+            bgElement.style.cssText = `
+                position: absolute;
+                inset: 0;
+                z-index: 0;
+                pointer-events: none;
+                opacity: ${bgOpacity / 100};
+                filter: blur(${bgBlur}px);
+            `;
+            
+            // Map background types to image files
+            const backgroundImages = {
+                'bg1': '/backgrounds/1769528516.png',
+                'bg2': '/backgrounds/1769528550.png',
+                'bg3': '/backgrounds/1769528632.png',
+                'bg4': '/backgrounds/1769528667.png',
+                'bg5': '/backgrounds/1769528899.png',
+                'bg6': '/backgrounds/1769529072.png'
+            };
+            
+            // Apply background based on type
+            if (backgroundImages[chatBackground]) {
+                // Use actual background image
+                bgElement.style.cssText += `
+                    background-image: url('${backgroundImages[chatBackground]}');
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                `;
+            } else if (chatBackground === 'custom') {
+                // Use custom uploaded image from Supabase
+                const customImageUrl = localStorage.getItem('customBackgroundUrl');
+                if (customImageUrl) {
+                    bgElement.style.cssText += `
+                        background-image: url('${customImageUrl}');
+                        background-size: cover;
+                        background-position: center;
+                        background-repeat: no-repeat;
+                    `;
+                }
+            }
+            
+            // Insert background as first child of main chat area
+            mainChatArea.insertBefore(bgElement, mainChatArea.firstChild);
+            
+            // Ensure existing abstract background is removed or adjusted
+            const existingAbstract = mainChatArea.querySelector('.absolute.inset-0.z-0');
+            if (existingAbstract) {
+                existingAbstract.style.display = 'none';
+            }
+        })();
+    </script>
+    
+    <!-- Room Modal UI -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('createJoinRoomModal');
+            const closeBtn = document.getElementById('closeCreateJoinModal');
+            const createRoomTab = document.getElementById('createRoomTab');
+            const joinRoomTab = document.getElementById('joinRoomTab');
+            const createChannelTab = document.getElementById('createChannelTab');
+            const createRoomContent = document.getElementById('createRoomContent');
+            const joinRoomContent = document.getElementById('joinRoomContent');
+            const createChannelContent = document.getElementById('createChannelContent');
+            const tempRoomBtn = document.getElementById('tempRoomBtn');
+            const foreverRoomBtn = document.getElementById('foreverRoomBtn');
+            const createRoomBtn = document.getElementById('createRoomBtn');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+            const createChannelBtn = document.getElementById('createChannelBtn');
+            const channelNameInput = document.getElementById('channelNameInput');
+            const channelDescriptionInput = document.getElementById('channelDescriptionInput');
+            const roomCodeInput = document.getElementById('roomCodeInput');
+            
+            let selectedRoomType = 'temp'; // default
+            
+            // Close button
+            closeBtn?.addEventListener('click', () => {
+                modal?.classList.add('hidden');
+                modal?.classList.remove('flex');
+            });
+            
+            // Click outside to close
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+            
+            const setActiveTab = (tab) => {
+                createRoomTab?.classList.toggle('bg-primary', tab === 'create');
+                createRoomTab?.classList.toggle('text-white', tab === 'create');
+                createRoomTab?.classList.toggle('text-slate-400', tab !== 'create');
+
+                joinRoomTab?.classList.toggle('bg-primary', tab === 'join');
+                joinRoomTab?.classList.toggle('text-white', tab === 'join');
+                joinRoomTab?.classList.toggle('text-slate-400', tab !== 'join');
+
+                createChannelTab?.classList.toggle('bg-primary', tab === 'channel');
+                createChannelTab?.classList.toggle('text-white', tab === 'channel');
+                createChannelTab?.classList.toggle('text-slate-400', tab !== 'channel');
+
+                createRoomContent?.classList.toggle('hidden', tab !== 'create');
+                joinRoomContent?.classList.toggle('hidden', tab !== 'join');
+                createChannelContent?.classList.toggle('hidden', tab !== 'channel');
+            };
+
+            const getI18nText = (key, fallback) => {
+                if (window.i18n && typeof window.i18n.t === 'function') {
+                    return window.i18n.t(key);
+                }
+                return fallback;
+            };
+
+            if (createChannelBtn) {
+                createChannelBtn.disabled = false;
+                createChannelBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Tab switching
+            createRoomTab?.addEventListener('click', () => {
+                setActiveTab('create');
+            });
+            
+            joinRoomTab?.addEventListener('click', () => {
+                setActiveTab('join');
+            });
+
+            createChannelTab?.addEventListener('click', () => {
+                setActiveTab('channel');
+            });
+            
+            // Room type selection
+            tempRoomBtn?.addEventListener('click', () => {
+                selectedRoomType = 'temp';
+                tempRoomBtn.classList.add('border-primary', 'bg-primary/10', 'text-white');
+                tempRoomBtn.classList.remove('border-slate-700', 'bg-surface-lighter', 'text-slate-400');
+                foreverRoomBtn.classList.remove('border-primary', 'bg-primary/10', 'text-white');
+                foreverRoomBtn.classList.add('border-slate-700', 'bg-surface-lighter', 'text-slate-400');
+            });
+            
+            foreverRoomBtn?.addEventListener('click', () => {
+                selectedRoomType = 'forever';
+                foreverRoomBtn.classList.add('border-primary', 'bg-primary/10', 'text-white');
+                foreverRoomBtn.classList.remove('border-slate-700', 'bg-surface-lighter', 'text-slate-400');
+                tempRoomBtn.classList.remove('border-primary', 'bg-primary/10', 'text-white');
+                tempRoomBtn.classList.add('border-slate-700', 'bg-surface-lighter', 'text-slate-400');
+            });
+            
+            // Create room button
+            createRoomBtn?.addEventListener('click', () => {
+                if (window.app && window.app.handleCreateNewRoomWithOptions) {
+                    window.app.handleCreateNewRoomWithOptions();
+                    modal?.classList.add('hidden');
+                    modal?.classList.remove('flex');
+                }
+            });
+
+            // Create channel button (admin only)
+            createChannelBtn?.addEventListener('click', async () => {
+                const name = channelNameInput?.value.trim();
+                const description = channelDescriptionInput?.value.trim();
+                if (!name) {
+                    alert(getI18nText('chat.channelNameRequired', 'Please enter a channel name'));
+                    return;
+                }
+
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    alert(getI18nText('chat.loginFirst', 'Please login first'));
+                    return;
+                }
+
+                const res = await fetch('/api/channels', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+
+                if (res.ok) {
+                    if (channelNameInput) channelNameInput.value = '';
+                    if (channelDescriptionInput) channelDescriptionInput.value = '';
+                    modal?.classList.add('hidden');
+                    modal?.classList.remove('flex');
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.error || getI18nText('chat.createChannelFailed', 'Failed to create channel'));
+                }
+            });
+
+            
+            // Join room button
+            joinRoomBtn?.addEventListener('click', () => {
+                const roomCode = roomCodeInput?.value.trim();
+                if (roomCode && window.socketManager) {
+                    const nickname = window.state?.get('user.nickname');
+                    if (nickname) {
+                        window.socketManager.joinRoom(roomCode, nickname);
+                        modal?.classList.add('hidden');
+                        modal?.classList.remove('flex');
+                        roomCodeInput.value = '';
+                    } else {
+                        alert('Please login first');
+                    }
+                } else {
+                    alert('Please enter a room code');
+                }
+            });
+            
+            // Store selected type for app.js to access
+            window.getSelectedRoomType = () => selectedRoomType;
+        });
+    </script>
+</body>
+</html>
+

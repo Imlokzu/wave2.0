@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>WAVE - Sign Up</title>
+    <!-- Theme Init (must be first to prevent flash) -->
+    <script src="/js/theme-init.js"></script>
+    <!-- Theme CSS -->
+    <link href="/css/theme.css" rel="stylesheet"/>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+        }
+    </style>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "flux-base": "#0a0e1a",
+                        "flux-surface": "#0f1729",
+                        "flux-highlight": "#1e3a8a",
+                        "flux-text": "#f5f7f6",
+                        "flux-muted": "#94a3b8"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                    boxShadow: {
+                        "glow": "0 0 40px -10px rgba(59, 130, 246, 0.3)",
+                        "input-focus": "0 0 0 2px rgba(59, 130, 246, 0.2)"
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0b0f0c; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        .glass-panel {
+            background: rgba(17, 33, 23, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        body {
+            zoom: 0.8;
+        }
+        
+        .password-strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .material-symbols-outlined:empty {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-flux-base text-flux-text font-display min-h-screen flex flex-col relative overflow-hidden selection:bg-primary selection:text-flux-base">
+    <!-- Ambient Background Glow -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-flux-highlight/10 blur-[120px] pointer-events-none"></div>
+    
+    <!-- Main Layout Container -->
+    <div class="layout-container flex h-full grow flex-col z-10">
+        <div class="flex flex-1 justify-center items-center py-5 px-4 sm:px-0">
+            <!-- Signup Card -->
+            <div class="glass-panel w-full max-w-[480px] rounded-[2.5rem] p-8 sm:p-12 shadow-2xl relative overflow-hidden group/card transition-all duration-500 hover:shadow-glow">
+                <div class="absolute top-5 right-5 flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1">
+                    <button type="button" class="lang-btn px-2.5 py-1 text-xs font-semibold rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors" data-lang="en">EN</button>
+                    <button type="button" class="lang-btn px-2.5 py-1 text-xs font-semibold rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors" data-lang="de">DE</button>
+                    <button type="button" class="lang-btn px-2.5 py-1 text-xs font-semibold rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors" data-lang="uk">UK</button>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity pointer-events-none"></div>
+                
+                <div class="layout-content-container flex flex-col relative z-10">
+                    <!-- Header Section -->
+                    <div class="flex flex-col items-center gap-3 mb-8">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-primary/30 blur-2xl rounded-full"></div>
+                            <img src="/nobackwave.png" alt="Wave" class="h-20 w-20 object-contain relative z-10 drop-shadow-2xl" />
+                        </div>
+                        <h1 class="text-4xl font-black text-white tracking-tighter font-outfit">WAVE</h1>
+                        <p class="text-slate-400 text-xs font-semibold tracking-[0.2em] uppercase" data-i18n="auth.createAccount">Create your account</p>
+                    </div>
+
+                    <div class="mb-6 text-center">
+                        <p class="text-white/90 text-lg font-semibold">Join Wave in seconds</p>
+                        <p class="text-slate-400 text-sm">One account for chat, rooms, and more.</p>
+                    </div>
+
+                    <div id="clerk-loading" class="w-full text-center text-sm text-slate-400">Loading sign up…</div>
+                    <div id="clerk-error" class="hidden w-full text-center text-sm text-red-400">Sign-up failed to load. Check Clerk keys and network access.</div>
+                    <div id="clerk-sign-up" class="w-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/clerk-config.js"></script>
+    <script src="/js/clerk-auth.js"></script>
+    <script>
+        (async function () {
+            const loadingEl = document.getElementById('clerk-loading');
+            const errorEl = document.getElementById('clerk-error');
+
+            try {
+                await window.clerkAuth.ensureLoaded();
+
+                if (window.Clerk?.user) {
+                    window.location.href = '/chat.html';
+                    return;
+                }
+
+                const signUpDiv = document.getElementById('clerk-sign-up');
+                if (signUpDiv) {
+                    window.Clerk.mountSignUp(signUpDiv, {
+                        afterSignUpUrl: '/chat.html',
+                        afterSignInUrl: '/chat.html',
+                        appearance: {
+                            variables: {
+                                colorPrimary: '#3b82f6',
+                                colorBackground: 'transparent',
+                                colorText: '#e6eef5',
+                                colorTextSecondary: '#94a3b8',
+                                colorInputBackground: 'rgba(15, 23, 41, 0.65)',
+                                colorInputText: '#e6eef5',
+                                borderRadius: '9999px',
+                                fontFamily: 'Inter, system-ui, sans-serif'
+                            },
+                            elements: {
+                                card: 'bg-transparent shadow-none p-0',
+                                headerTitle: 'text-white text-2xl font-bold',
+                                headerSubtitle: 'text-slate-400',
+                                socialButtonsBlockButton: 'bg-white/5 border border-white/10 hover:bg-white/10',
+                                formFieldInput: 'bg-white/5 border border-white/10 focus:border-primary/60',
+                                formButtonPrimary: 'bg-primary hover:bg-[#2563eb] text-white font-bold',
+                                footerActionLink: 'text-primary hover:text-white'
+                            }
+                        }
+                    });
+
+                    if (loadingEl) loadingEl.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to initialize Clerk:', error);
+                if (loadingEl) loadingEl.classList.add('hidden');
+                if (errorEl) errorEl.classList.remove('hidden');
+            }
+        })();
+    </script>
+    
+    <!-- i18n Support -->
+    <script src="/js/i18n.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.i18n) {
+                await window.i18n.init();
+                const buttons = document.querySelectorAll('.lang-btn');
+                const setActive = (lang) => {
+                    buttons.forEach((btn) => {
+                        const isActive = btn.dataset.lang === lang;
+                        btn.classList.toggle('bg-white/15', isActive);
+                        btn.classList.toggle('text-white', isActive);
+                        btn.classList.toggle('text-white/70', !isActive);
+                    });
+                };
+                setActive(window.i18n.getCurrentLanguage());
+                buttons.forEach((btn) => {
+                    btn.addEventListener('click', async () => {
+                        await window.i18n.setLanguage(btn.dataset.lang);
+                        setActive(window.i18n.getCurrentLanguage());
+                    });
+                });
+            }
+        });
+    </script>

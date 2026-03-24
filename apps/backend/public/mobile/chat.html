@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <title>Wave - Chats</title>
+    <script src="/js/auth-guard.js"></script>
+    <script src="/js/theme-init.js"></script>
+    <link href="/css/theme.css" rel="stylesheet" />
+    <link href="/css/theme-config.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0db9f2",
+                        "primary-dark": "#0a8fc4",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0a0f12",
+                        "surface-dark": "#0f1419",
+                        "surface-hover": "#151b21",
+                        "surface-lighter": "#1a2128",
+                        "border-dark": "#1f2830",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            min-height: 100dvh;
+        }
+
+        /* Robust Tab Styles */
+        .tab-active {
+            background-color: #0db9f2 !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        .tab-inactive {
+            background-color: transparent !important;
+            color: #94a3b8 !important;
+            font-weight: 500 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-white font-display overflow-x-hidden min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-surface-dark/95 backdrop-blur-xl px-4 pt-4 pb-3 border-b border-border-dark">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <img src="/wavechat.png" alt="Wave" class="w-8 h-8 rounded-lg object-contain" />
+                <h2 class="text-2xl font-bold">Chats</h2>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleSearch()"
+                    class="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-lighter text-slate-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 22px;">search</span>
+                </button>
+                <button onclick="createNewChat()"
+                    class="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-lighter text-slate-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 22px;">edit_square</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar (Hidden by default) -->
+        <div id="searchContainer" class="hidden mb-3">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="material-symbols-outlined text-slate-500" style="font-size: 20px;">search</span>
+                </div>
+                <input id="searchInput"
+                    class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface-lighter border border-transparent focus:border-primary/50 focus:ring-0 placeholder-slate-500 text-slate-200 text-sm"
+                    placeholder="Search users..." type="text" />
+                <button onclick="toggleSearch()"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-primary">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+                </button>
+            </div>
+            <div id="searchResults"
+                class="mt-2 bg-surface-dark border border-border-dark rounded-xl max-h-64 overflow-y-auto hidden"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 bg-surface-lighter rounded-lg p-1">
+            <button id="tabDMs" class="flex-1 py-2 px-4 rounded-md text-sm transition-all tab-active">
+                Direct Messages
+            </button>
+            <button id="tabRooms" class="flex-1 py-2 px-4 rounded-md text-sm transition-all tab-inactive">
+                Rooms
+            </button>
+        </div>
+    </header>
+
+    <!-- Chat Lists -->
+    <div class="flex-1 overflow-y-auto hide-scrollbar pb-24">
+        <!-- DMs List -->
+        <div id="dmsListContainer" class="px-2 py-2">
+            <!-- DMs will be loaded here -->
+        </div>
+
+        <!-- Rooms List -->
+        <div id="roomsListContainer" class="px-2 py-2 hidden">
+            <!-- Rooms will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav
+        class="fixed bottom-0 left-0 right-0 z-50 bg-surface-dark/95 backdrop-blur-lg border-t border-border-dark pb-safe">
+        <div class="flex justify-around items-center h-20 px-6 pb-2">
+            <button class="flex flex-col items-center gap-1 w-12 text-primary">
+                <div class="w-10 h-8 flex items-center justify-center bg-primary/10 rounded-full">
+                    <span class="material-symbols-outlined fill-current" style="font-size: 24px;">chat_bubble</span>
+                </div>
+                <span class="text-[10px] font-semibold">Chats</span>
+            </button>
+            <a href="/mobile/feed.html" class="flex flex-col items-center justify-center -mt-6">
+                <div
+                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-[0_8px_16px_rgba(13,185,242,0.3)] flex items-center justify-center text-white transform active:scale-95 transition-transform">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">newspaper</span>
+                </div>
+            </a>
+            <a href="/mobile/aichat.html"
+                class="flex flex-col items-center gap-1 w-12 text-slate-400 hover:text-slate-200 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 24px;">smart_toy</span>
+                <span class="text-[10px] font-medium">AI</span>
+            </a>
+            <a href="/mobile/bio.html"
+                class="flex flex-col items-center gap-1 w-12 text-slate-400 hover:text-slate-200 transition-colors">
+                <div
+                    class="w-6 h-6 rounded-full overflow-hidden bg-slate-700 ring-2 ring-transparent hover:ring-primary transition-all">
+                    <span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
+                </div>
+                <span class="text-[10px] font-medium">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Scripts - Reuse desktop code -->
+    <script src="/js/config.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/state.js"></script>
+
+    <script>
+        // Mobile Chat - Reuses desktop backend completely
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) window.location.href = '/login.html';
+
+        let activeTab = 'dms';
+        let dmConversations = [];
+        let rooms = [];
+
+        // Initialize Socket.IO
+        socketManager.connect();
+
+        // Register user
+        const username = localStorage.getItem('username');
+        if (username) {
+            socketManager.socket.on('connect', () => {
+                socketManager.registerUsername(username, username);
+            });
+        }
+
+        // Tab switching
+        document.getElementById('tabDMs').onclick = () => switchTab('dms');
+        document.getElementById('tabRooms').onclick = () => switchTab('rooms');
+
+        function switchTab(tab) {
+            activeTab = tab;
+
+            const tabDMs = document.getElementById('tabDMs');
+            const tabRooms = document.getElementById('tabRooms');
+            const dmsContainer = document.getElementById('dmsListContainer');
+            const roomsContainer = document.getElementById('roomsListContainer');
+
+            if (tab === 'dms') {
+                // Active state for DMs
+                tabDMs.className = 'flex-1 py-2 px-4 rounded-md text-sm transition-all tab-active';
+                tabRooms.className = 'flex-1 py-2 px-4 rounded-md text-sm transition-all tab-inactive';
+
+                dmsContainer.classList.remove('hidden');
+                roomsContainer.classList.add('hidden');
+            } else {
+                // Active state for Rooms
+                tabRooms.className = 'flex-1 py-2 px-4 rounded-md text-sm transition-all tab-active';
+                tabDMs.className = 'flex-1 py-2 px-4 rounded-md text-sm transition-all tab-inactive';
+
+                roomsContainer.classList.remove('hidden');
+                dmsContainer.classList.add('hidden');
+            }
+        }
+
+        // Load conversations from localStorage (same as desktop)
+        function loadConversations() {
+            try {
+                const savedSession = localStorage.getItem('wave_session');
+                if (savedSession) {
+                    const session = JSON.parse(savedSession);
+                    if (session.dmConversations) {
+                        dmConversations = session.dmConversations;
+                    }
+                    if (session.rooms) {
+                        rooms = session.rooms;
+                    }
+                }
+            } catch (error) {
+                console.error('[Mobile] Error loading conversations:', error);
+            }
+
+            renderDMs();
+            renderRooms();
+        }
+
+        function renderDMs() {
+            const container = document.getElementById('dmsListContainer');
+
+            if (dmConversations.length === 0) {
+                container.innerHTML = `
+            <div class="text-center py-12 px-4">
+                <span class="material-symbols-outlined text-slate-500 text-6xl">search</span>
+                <p class="text-slate-300 mt-4 text-lg font-bold">Find Friends</p>
+                <p class="text-slate-500 text-sm mt-2">Search for users to start a conversation</p>
+                <button onclick="toggleSearch()" class="mt-6 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors">
+                    <span class="material-symbols-outlined inline-block mr-2" style="vertical-align: middle; font-size: 20px;">search</span>
+                    Search Users
+                </button>
+            </div>
+        `;
+                return;
+            }
+
+            container.innerHTML = dmConversations.map(username => `
+        <div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-lighter transition-colors cursor-pointer" onclick="openDM('${username}')">
+            <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-lg font-bold shrink-0">
+                ${username[0].toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                    <h4 class="text-base font-bold text-white truncate">${username}</h4>
+                    <span class="text-xs text-slate-500">Now</span>
+                </div>
+                <p class="text-sm text-slate-400 truncate">Tap to open chat</p>
+            </div>
+        </div>
+    `).join('');
+        }
+
+        function renderRooms() {
+            const container = document.getElementById('roomsListContainer');
+
+            if (rooms.length === 0) {
+                container.innerHTML = `
+            <div class="text-center py-12 px-4">
+                <span class="material-symbols-outlined text-slate-500 text-6xl">meeting_room</span>
+                <p class="text-slate-300 mt-4 text-lg font-bold">No Rooms Yet</p>
+                <p class="text-slate-500 text-sm mt-2">Create or join a room to get started</p>
+                <button onclick="createNewChat()" class="mt-6 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors">
+                    <span class="material-symbols-outlined inline-block mr-2" style="vertical-align: middle; font-size: 20px;">add</span>
+                    Create Room
+                </button>
+            </div>
+        `;
+                return;
+            }
+
+            container.innerHTML = rooms.map(room => `
+        <div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-lighter transition-colors cursor-pointer" onclick="openRoom('${room.code}')">
+            <div class="w-12 h-12 rounded-full bg-surface-lighter flex items-center justify-center text-primary text-lg shrink-0">
+                <span class="material-symbols-outlined">meeting_room</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                    <h4 class="text-base font-bold text-white truncate">${room.name || 'Room ' + room.code}</h4>
+                    <span class="text-xs text-slate-500">Now</span>
+                </div>
+                <p class="text-sm text-slate-400 truncate">Code: ${room.code}</p>
+            </div>
+        </div>
+    `).join('');
+        }
+
+        function openDM(username) {
+            localStorage.setItem('currentDM', username);
+            localStorage.removeItem('currentRoomCode');
+            window.location.href = '/chat.html';
+        }
+
+        function openRoom(code) {
+            localStorage.setItem('currentRoomCode', code);
+            localStorage.removeItem('currentDM');
+            window.location.href = '/chat.html';
+        }
+
+        // Search functionality
+        let searchTimeout;
+
+        function toggleSearch() {
+            const container = document.getElementById('searchContainer');
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                searchInput.focus();
+            } else {
+                container.classList.add('hidden');
+                searchInput.value = '';
+                searchResults.classList.add('hidden');
+                searchResults.innerHTML = '';
+            }
+        }
+
+        document.getElementById('searchInput').oninput = async (e) => {
+            const query = e.target.value.trim();
+            const searchResults = document.getElementById('searchResults');
+
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            if (!query) {
+                searchResults.classList.add('hidden');
+                searchResults.innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const users = result.data || result;
+
+                        if (users.length > 0) {
+                            searchResults.innerHTML = users.map(user => `
+                        <div class="flex items-center gap-3 p-3 hover:bg-surface-lighter cursor-pointer transition-colors border-b border-border-dark last:border-0" onclick="startDM('${user.username || user.nickname}')">
+                            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                                ${(user.username || user.nickname)?.[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-bold text-white">${user.username || user.nickname}</div>
+                                <div class="text-xs text-slate-400">Click to start DM</div>
+                            </div>
+                            <span class="material-symbols-outlined text-primary">chat</span>
+                        </div>
+                    `).join('');
+                            searchResults.classList.remove('hidden');
+                        } else {
+                            searchResults.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No users found</div>';
+                            searchResults.classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('[Mobile] Search error:', error);
+                }
+            }, 300);
+        };
+
+        function startDM(username) {
+            // Add to DM conversations if not already there
+            if (!dmConversations.includes(username)) {
+                dmConversations.push(username);
+                const session = JSON.parse(localStorage.getItem('wave_session') || '{}');
+                session.dmConversations = dmConversations;
+                localStorage.setItem('wave_session', JSON.stringify(session));
+            }
+
+            localStorage.setItem('currentDM', username);
+            localStorage.removeItem('currentRoomCode');
+            window.location.href = '/chat.html';
+        }
+
+        function createNewChat() {
+            // For now, just open search
+            toggleSearch();
+        }
+
+        // Real-time updates
+        socketManager.on('dm:received', loadConversations);
+        socketManager.on('dm:sent', loadConversations);
+        socketManager.on('room:joined', loadConversations);
+
+        // Initialize
+        loadConversations();
+    </script>
+
+</body>
+
+</html>

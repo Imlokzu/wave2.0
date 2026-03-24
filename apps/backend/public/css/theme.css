@@ -1,0 +1,582 @@
+/* WAVE Messenger - Universal Theme System */
+/* 
+ * GLOBAL COLOR SYSTEM
+ * Change colors in theme-config.css to theme the entire app
+ */
+
+/* Theme CSS Variables */
+:root {
+    /* Main Theme Colors - Defined in theme-config.css */
+    --color-primary: #3b82f6;
+    --color-secondary: #8b92a8;
+    --color-tertiary: #10b981;
+    
+    /* Background Colors - Defined in theme-config.css */
+    --bg-primary: var(--bg-page, #f5f7fa);
+    --bg-secondary: var(--bg-secondary, #ffffff);
+    --surface: var(--bg-surface, #ffffff);
+    --surface-dark: var(--bg-surface-dark, #f8f9fb);
+    --surface-hover: var(--bg-surface-lighter, #ffffff);
+    --surface-dark-hover: #1a2830;
+    
+    /* Text Colors */
+    --text-primary: var(--text-primary, #111827);
+    --text-secondary: var(--text-secondary, #6b7280);
+    --text-muted: var(--text-muted, #9ca3af);
+    
+    /* Border Colors */
+    --border: var(--border-main, #d1d5db);
+    --border-dark: var(--border-dark, #e5e7eb);
+    --border-subtle: var(--border-subtle, #f3f4f6);
+    
+    /* Accent Colors */
+    --accent: var(--color-primary);
+    --accent-hover: var(--color-tertiary);
+    --shadow: rgba(0, 0, 0, 0.08);
+    
+    /* Logo */
+    --logo-url: url('/lightwave.png');
+}
+
+.dark {
+    /* Main Theme Colors - Defined in theme-config.css */
+    --color-primary: #00d9ff;
+    --color-secondary: #90bccb;
+    --color-tertiary: #34caff;
+    
+    /* Background Colors - Use theme-config.css values */
+    --bg-primary: var(--bg-page, #0f1419);
+    --bg-secondary: var(--bg-secondary, #1a1f2e);
+    --surface: var(--bg-surface, #1e2433);
+    --surface-dark: var(--bg-surface-dark, #101e23);
+    --surface-hover: var(--bg-surface-lighter, #252d3d);
+    --surface-dark-hover: #1a2830;
+    
+    /* Text Colors */
+    --text-primary: var(--text-primary, #e4e6eb);
+    --text-secondary: var(--text-secondary, #90bccb);
+    --text-muted: var(--text-muted, #5a7d8a);
+    
+    /* Border Colors */
+    --border: var(--border-main, #2d3748);
+    --border-dark: var(--border-dark, #223f49);
+    --border-subtle: var(--border-subtle, #1e2433);
+    
+    /* Accent Colors */
+    --shadow: rgba(0, 0, 0, 0.4);
+    --accent: var(--color-primary);
+    --accent-hover: var(--color-tertiary);
+    --accent-glow: rgba(0, 217, 255, 0.15);
+    
+    /* Logo */
+    --logo-url: url('/wavechat.png');
+    
+    /* Additional dark mode variables */
+    --surface-elevated: #252d3d;
+    --surface-sunken: #161b26;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    
+    /* Computed colors based on primary */
+    --primary-rgb: 0, 217, 255;
+    --primary-10: rgba(0, 217, 255, 0.1);
+    --primary-20: rgba(0, 217, 255, 0.2);
+    --primary-30: rgba(0, 217, 255, 0.3);
+    --primary-50: rgba(0, 217, 255, 0.5);
+}
+
+/* Apply theme colors */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Theme-aware logo */
+.theme-logo {
+    content: var(--logo-url);
+}
+
+img.theme-logo {
+    content: var(--logo-url);
+}
+
+/* Alternative: Use data attribute for logo switching */
+[data-theme-logo] {
+    background-image: var(--logo-url);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Scrollbar theming */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--surface-hover);
+}
+
+/* Glass panel effect */
+.glass-panel {
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px var(--shadow);
+}
+
+.dark .glass-panel {
+    background: rgba(30, 36, 51, 0.85);
+    border: 1px solid rgba(45, 55, 72, 0.6);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Button styles */
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.dark .btn-primary {
+    box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.dark .btn-primary:hover {
+    box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+/* Input styles */
+input, textarea, select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.dark input, .dark textarea, .dark select {
+    background: var(--surface-sunken);
+    border-color: var(--border-subtle);
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Card hover effects */
+.dark .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* Message bubbles */
+.dark .message-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+}
+
+.dark .message-bubble.own {
+    background: linear-gradient(135deg, var(--accent) 0%, #4a7de8 100%);
+    border: none;
+}
+
+/* Sidebar/Navigation */
+.dark .sidebar {
+    background: var(--surface-sunken);
+    border-right: 1px solid var(--border-subtle);
+}
+
+/* Accent glow effect */
+.dark .accent-glow {
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* Text selection */
+.dark ::selection {
+    background: var(--accent-glow);
+    color: var(--text-primary);
+}
+
+/* Wave background */
+.wave-bg {
+    background: linear-gradient(-45deg, var(--bg-primary), var(--bg-secondary), #0c4a6e, var(--bg-primary));
+    background-size: 400% 400%;
+    animation: subtle-drift 15s ease infinite;
+}
+
+.dark .wave-bg {
+    background: linear-gradient(-45deg, #000000, #0a0a0a, #0c4a6e, #000000);
+}
+
+@keyframes subtle-drift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+
+/* ========================================
+ * UTILITY CLASSES - Use CSS Variables
+ * ======================================== */
+
+/* Background Colors */
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.bg-tertiary { background-color: var(--color-tertiary) !important; }
+.bg-surface { background-color: var(--surface) !important; }
+.bg-surface-dark { background-color: var(--surface-dark) !important; }
+.bg-surface-hover { background-color: var(--surface-hover) !important; }
+.bg-surface-dark-hover { background-color: var(--surface-dark-hover) !important; }
+.bg-page { background-color: var(--bg-page) !important; }
+.bg-nav { background-color: var(--bg-nav) !important; }
+
+/* Background with theme variables */
+.bg-background-dark { background-color: var(--bg-surface-dark) !important; }
+.bg-surface-lighter { background-color: var(--surface-hover) !important; }
+
+/* Text Colors */
+.text-primary { color: var(--color-primary) !important; }
+.text-secondary { color: var(--color-secondary) !important; }
+.text-tertiary { color: var(--color-tertiary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+/* Border Colors */
+.border-primary { border-color: var(--color-primary) !important; }
+.border-secondary { border-color: var(--color-secondary) !important; }
+.border-dark { border-color: var(--border-dark) !important; }
+.border-main { border-color: var(--border-main) !important; }
+.border-subtle { border-color: var(--border-subtle) !important; }
+
+/* Hover States */
+.hover\:bg-primary:hover { background-color: var(--color-primary) !important; }
+.hover\:bg-tertiary:hover { background-color: var(--color-tertiary) !important; }
+.hover\:bg-surface-hover:hover { background-color: var(--surface-hover) !important; }
+.hover\:bg-surface-dark-hover:hover { background-color: var(--surface-dark-hover) !important; }
+.hover\:bg-surface-lighter:hover { background-color: var(--surface-hover) !important; }
+.hover\:text-primary:hover { color: var(--color-primary) !important; }
+.hover\:text-white:hover { color: white !important; }
+
+/* Focus States */
+.focus\:border-primary:focus { border-color: var(--color-primary) !important; }
+.focus\:ring-primary:focus { 
+    --tw-ring-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+
+/* Opacity Variants */
+.bg-primary\/10 { background-color: var(--primary-10) !important; }
+.bg-primary\/20 { background-color: var(--primary-20) !important; }
+.bg-primary\/30 { background-color: var(--primary-30) !important; }
+.bg-primary\/50 { background-color: var(--primary-50) !important; }
+
+.border-primary\/50 { border-color: var(--primary-50) !important; }
+
+/* Shadow Variants */
+.shadow-primary\/20 { 
+    box-shadow: 0 10px 15px -3px var(--primary-20), 0 4px 6px -4px var(--primary-10) !important;
+}
+
+/* Placeholder Colors */
+.placeholder-muted::placeholder { color: var(--text-muted) !important; }
+.placeholder-secondary::placeholder { color: var(--color-secondary) !important; }
+
+/* Active States */
+.active\:scale-95:active { transform: scale(0.95) !important; }
+.active\:scale-\[0\.98\]:active { transform: scale(0.98) !important; }
+
+/* Transition Utilities */
+.transition-colors { transition: color 0.2s, background-color 0.2s, border-color 0.2s !important; }
+.transition-all { transition: all 0.2s !important; }
+
+/* ========================================
+ * COMPONENT-SPECIFIC OVERRIDES
+ * ======================================== */
+
+/* Replace hardcoded #90bccb with secondary color */
+.dark [class*="text-[#90bccb]"],
+.dark .text-\[\#90bccb\] {
+    color: var(--color-secondary) !important;
+}
+
+.dark [class*="hover:text-white"]:hover {
+    color: white !important;
+}
+
+/* Replace hardcoded #34caff with tertiary color */
+.dark [class*="bg-[#34caff]"],
+.dark .bg-\[\#34caff\],
+.dark [class*="hover:bg-[#34caff]"]:hover,
+.dark .hover\:bg-\[\#34caff\]:hover {
+    background-color: var(--color-tertiary) !important;
+}
+
+/* Replace hardcoded #101e23 with surface-dark */
+.dark [class*="bg-[#101e23]"],
+.dark .bg-\[\#101e23\] {
+    background-color: var(--surface-dark) !important;
+}
+
+/* Replace hardcoded #223f49 with border-dark */
+.dark [class*="border-[#223f49]"],
+.dark .border-\[\#223f49\] {
+    border-color: var(--border-dark) !important;
+}
+
+/* Replace hardcoded #5a7d8a with text-muted */
+.dark [class*="placeholder-[#5a7d8a]"]::placeholder,
+.dark .placeholder-\[\#5a7d8a\]::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* Replace hardcoded #144535 with darker surface */
+.dark [class*="focus:bg-[#144535]"]:focus,
+.dark .focus\:bg-\[\#144535\]:focus {
+    background-color: var(--surface-dark) !important;
+}
+
+/* Replace hardcoded #2563eb with accent-hover */
+.dark [class*="hover:bg-[#2563eb]"]:hover,
+.dark .hover\:bg-\[\#2563eb\]:hover {
+    background-color: var(--accent-hover) !important;
+}
+
+/* ========================================
+ * BUTTON COMPONENTS
+ * ======================================== */
+
+/* Primary Button */
+.btn-primary,
+button.bg-primary,
+a.bg-primary {
+    background-color: var(--color-primary) !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    transition: all 0.2s !important;
+}
+
+.btn-primary:hover,
+button.bg-primary:hover,
+a.bg-primary:hover {
+    background-color: var(--color-tertiary) !important;
+    transform: translateY(-1px);
+}
+
+.dark .btn-primary:hover,
+.dark button.bg-primary:hover,
+.dark a.bg-primary:hover {
+    box-shadow: 0 4px 16px var(--accent-glow) !important;
+}
+
+/* ========================================
+ * INPUT COMPONENTS
+ * ======================================== */
+
+.dark input,
+.dark textarea,
+.dark select {
+    background-color: var(--surface-dark) !important;
+    border-color: var(--border-dark) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+    border-color: var(--color-primary) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+
+/* Room Creation Modal Styles */
+.room-type-btn.active {
+    background-color: rgba(13, 185, 242, 0.1);
+    border-color: #0db9f2;
+    color: #0db9f2;
+}
+
+/* ========================================
+ * ANIMATED HAMBURGER MENU
+ * ======================================== */
+
+.hamburger-menu {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu span {
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.hamburger-menu span:nth-child(1) {
+    transform: translateY(-6px);
+}
+
+.hamburger-menu span:nth-child(2) {
+    opacity: 1;
+}
+
+.hamburger-menu span:nth-child(3) {
+    transform: translateY(6px);
+}
+
+/* Checkbox controlled animation */
+.hamburger-checkbox {
+    display: none;
+}
+
+.hamburger-checkbox:checked + .hamburger-menu span:nth-child(1) {
+    transform: rotate(45deg) translateY(0px);
+}
+
+.hamburger-checkbox:checked + .hamburger-menu span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-checkbox:checked + .hamburger-menu span:nth-child(3) {
+    transform: rotate(-45deg) translateY(0px);
+}
+
+/* Alternative: Button controlled animation */
+.hamburger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translateY(0px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translateY(0px);
+}
+
+/* ========================================
+ * LOADING ANIMATIONS
+ * ======================================== */
+
+/* From Uiverse.io by AbanoubMagdy1 */
+.loader {
+  --dim: 3rem;
+  width: var(--dim);
+  height: var(--dim);
+  position: relative;
+  animation: spin988 2s linear infinite;
+}
+
+.loader .circle {
+  --color: #333;
+  --dim: 1.2rem;
+  width: var(--dim);
+  height: var(--dim);
+  background-color: var(--color);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.loader .circle:nth-child(1) {
+  top: 0;
+  left: 0;
+}
+
+.loader .circle:nth-child(2) {
+  top: 0;
+  right: 0;
+}
+
+.loader .circle:nth-child(3) {
+  bottom: 0;
+  left: 0;
+}
+
+.loader .circle:nth-child(4) {
+  bottom: 0;
+  right: 0;
+}
+
+@keyframes spin988 {
+  0% {
+    transform: scale(1) rotate(0);
+  }
+
+  20%, 25% {
+    transform: scale(1.3) rotate(90deg);
+  }
+
+  45%, 50% {
+    transform: scale(1) rotate(180deg);
+  }
+
+  70%, 75% {
+    transform: scale(1.3) rotate(270deg);
+  }
+
+  95%, 100% {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+/* Theme-aware loader colors */
+.dark .loader .circle {
+  --color: var(--color-primary);
+}
+
+.light .loader .circle {
+  --color: var(--color-secondary);
+}
+
+/* Smaller loader variant for inline use */
+.loader-sm {
+  --dim: 1.5rem;
+}
+
+.loader-sm .circle {
+  --dim: 0.6rem;
+}
+
+/* Extra small loader for buttons */
+.loader-xs {
+  --dim: 1rem;
+}
+
+.loader-xs .circle {
+  --dim: 0.4rem;
+}

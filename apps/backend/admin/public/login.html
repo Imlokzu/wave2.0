@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Wave Admin - Login</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0db9f2",
+                        "background-dark": "#101e23",
+                        "surface-dark": "#16262c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(22, 38, 44, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-dark font-display antialiased min-h-screen flex items-center justify-center relative overflow-hidden">
+    <!-- Ambient background effects -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-md px-6">
+        <div class="glass-panel rounded-2xl p-8 shadow-2xl">
+            <!-- Logo and Title -->
+            <div class="flex flex-col items-center mb-8">
+                <img src="/nobackweave.png" alt="Wave" class="h-16 w-16 object-contain mb-4" />
+                <h1 class="text-white text-3xl font-bold tracking-tight">Wave Admin</h1>
+                <p class="text-[#90bccb] text-sm mt-2">Admin Panel Access</p>
+            </div>
+
+            <div id="clerk-admin-sign-in" class="w-full"></div>
+        </div>
+    </div>
+
+    <script src="/js/clerk-config.js"></script>
+    <script src="/js/clerk-auth.js"></script>
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168') 
+            ? `http://${window.location.hostname}:3001`
+            : 'https://api.metrocraft.eu';
+
+        async function verifyAdmin(token) {
+            const response = await fetch(`${API_BASE}/api/admin/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                throw new Error('Admin access required. Please contact an administrator.');
+            }
+
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('token', token);
+            localStorage.setItem('adminToken', token);
+            window.location.href = '/admin/index.html';
+        }
+
+        (async function () {
+            try {
+                await window.clerkAuth.ensureLoaded();
+
+                if (window.Clerk?.user) {
+                    const token = await window.clerkAuth.getToken();
+                    if (token) {
+                        await verifyAdmin(token);
+                        return;
+                    }
+                }
+
+                const signInDiv = document.getElementById('clerk-admin-sign-in');
+                if (signInDiv) {
+                    window.Clerk.mountSignIn(signInDiv, {
+                        afterSignInUrl: '/admin/index.html',
+                        afterSignUpUrl: '/admin/index.html'
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to initialize Clerk:', error);
+            }
+        })();
+    </script>
+</body>
+</html>
