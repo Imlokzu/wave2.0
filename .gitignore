@@ -1,14 +1,1 @@
-﻿# Global secret and local config exclusions
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-id_rsa
-id_ed25519
-
-# Dependency/cache
-node_modules/
-**/node_modules/
+Nothing should be ignored based on the provided file changes. The only modified file is README.md, which is a source/config file and should not be added to .gitignore.
